@@ -21,7 +21,7 @@
 * 测试版本：
 	* Java1.8
 	* MySQL8、Redis6、
-	* Nacos2.3、Sentinel1.8.8、Skywalking10.0.0、Skywalking-Agent9.2.0、
+	* Nacos2.3(java1.8)、Sentinel1.8.8(java17)、Skywalking10.0.0(java17)、Skywalking-Agent9.2.0
  	* nodejs14
   	* kubernetes1.30
   	  
