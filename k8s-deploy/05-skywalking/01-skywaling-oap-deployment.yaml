@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skywalking-oap
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sky-oap
+  template:
+    metadata:
+      labels:
+        app: sky-oap
+    spec:
+      containers:
+      - name: oap
+        image: uhub.service.ucloud.cn/oldxu/skywalking-oap-server:10.0.0-java17
+        ports:
+        - name: agent
+          containerPort: 11800
+        - name: oap
+          containerPort: 12800
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skywalking-oap-svc
+  namespace: dev
+spec:
+  selector:
+    app: sky-oap
+  ports:
+  - name: oap
+    port: 12800
+    targetPort: 12800
+  - name: agent
+    port: 11800
+    targetPort: 11800

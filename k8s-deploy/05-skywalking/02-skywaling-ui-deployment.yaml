@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: skywalking-ui
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sky-ui
+  template:
+    metadata:
+      labels:
+        app: sky-ui
+    spec:
+      containers:
+      - name: ui
+        image: uhub.service.ucloud.cn/oldxu/skywalking-ui:10.0.0-java17
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SW_OAP_ADDRESS
+          value: "http://skywalking-oap-svc:12800"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: skywalking-ui-svc
+  namespace: dev
+spec:
+  selector:
+    app: sky-ui
+  ports:
+  - name: ui
+    port: 8080
+    targetPort: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: skywalking-ingress
+  namespace: dev
+spec:
+  ingressClassName: "nginx"
+
+  rules:
+  - host: sky.oldxu.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: skywalking-ui-svc
+            port:
+              name: ui

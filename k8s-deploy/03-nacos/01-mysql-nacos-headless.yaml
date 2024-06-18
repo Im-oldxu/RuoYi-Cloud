@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-nacos-svc
+  namespace: dev
+spec:
+  clusterIP: None
+  selector:
+    app: mysql
+    role: nacos
+  ports:
+  - port: 3306
+    targetPort: 3306

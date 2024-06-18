@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: skywalking-agent-demo
+  namespace: default
+spec:
+  imagePullSecrets:
+  - name: harbor-admin
+
+  volumes:
+  - name: skywalking-agent
+    emptyDir: {}
+
+  # 将镜像当中的某个文件内容所有数据拷贝到卷中了
+  initContainers:
+  - name: init-skywalking-agent
+    image: harbor.oldxu.net/springcloud/skywalking-java-agent:9.2.0
+    command: ["sh","-c","cp -r /skywalking-agent/* /agent;"]
+    volumeMounts:
+    - name: skywalking-agent
+      mountPath: /agent
+
+  # 业务
+  containers:
+  - name: java
+    image: uhub.service.ucloud.cn/oldxu/springboot-devops:v1.0
+    env:
+    - name: JAVA_TOOL_OPTIONS
+      value: "-javaagent:/skywalking/skywalking-agent.jar"
+    - name: SW_AGENT_NAME
+      value: "oldxu-k8s-jar"
+    - name: SW_AGENT_NAMESPACE
+      value: "default"
+    - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+      value: "skywalking-oap-svc.dev.svc.cluster.local:11800"
+    volumeMounts:
+    - name: skywalking-agent
+      mountPath: /skywalking/

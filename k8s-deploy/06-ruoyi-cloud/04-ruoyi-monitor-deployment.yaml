@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ruoyi-monitor
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ruoyi-monitor
+
+  template:
+    metadata:
+      labels:
+        app: ruoyi-monitor
+    spec:
+      imagePullSecrets:
+      - name: harbor-admin
+
+      volumes:
+      - name: skywalking-agent
+        emptyDir: {}
+
+      # 接入Skwaling
+      initContainers:
+      - name: init-skywalking-agent
+        image: harbor.oldxu.net/springcloud/skywalking-java-agent:9.2.0
+        command: ["sh","-c","cp -r /skywalking-agent/* /agent;"]
+        volumeMounts:
+        - name: skywalking-agent
+          mountPath: /agent
+
+      containers:
+      - name: monitor
+        image: harbor.oldxu.net/springcloud/ruoyi-monitor:v1.0
+        env:
+        - name: TZ
+          value: Asia/Shanghai
+        - name: spring.profiles.active
+          value: dev
+        - name: spring.cloud.nacos.discovery.server-addr
+          value: "http://nacos-svc.dev.svc.cluster.local:8848"
+        - name: spring.cloud.nacos.config.server-addr
+          value: "http://nacos-svc.dev.svc.cluster.local:8848"
+        - name: JAVA_TOOL_OPTIONS
+          value: "-javaagent:/skywalking/skywalking-agent.jar"
+        - name: SW_AGENT_NAME
+          value: "ruoyi-monitor"
+        - name: SW_AGENT_NAMESPACE
+          value: "dev"
+        - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+          value: "skywalking-oap-svc.dev.svc.cluster.local:11800"
+        volumeMounts:
+        - name: skywalking-agent
+          mountPath: /skywalking/
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ruoyi-monitor-svc
+  namespace: dev
+spec:
+  selector:
+    app: ruoyi-monitor
+  ports:
+  - name: http
+    port: 9100
+    targetPort: 9100
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: monitor-ingress
+  namespace: dev
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: monitor.oldxu.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ruoyi-monitor-svc
+            port:
+              name: http

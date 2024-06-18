@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nacos     # nacos-0 nacos-1 nacos-2
+  namespace: dev
+spec:
+  serviceName: "nacos-svc"
+  podManagementPolicy: Parallel
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nacos
+
+  template:
+    metadata:
+      labels:
+        app: nacos
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values: ["nacos"]
+              topologyKey: "kubernetes.io/hostname"
+      initContainers:
+      - name: nacos-plugin
+        image: uhub.service.ucloud.cn/oldxu/nacos/nacos-peer-finder-plugin:1.1
+        imagePullPolicy: Always
+        volumeMounts:			# 将 peer-finder 子路径数据挂载到卷中，供后面的主容器使用；
+        - name: data
+          mountPath: /home/nacos/plugins/peer-finder
+          subPath: peer-finder
+      containers:
+      - name: nacos
+        image: uhub.service.ucloud.cn/oldxu/nacos/nacos-server:v2.3.2
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+        ports:
+        - name: client
+          containerPort: 9848
+        - name: server
+          containerPort: 8848
+        - name: raft
+          containerPort: 9849
+        # Nacos链接数据库的信息
+        envFrom:
+        - configMapRef:
+            name: nacos-db-cm
+        env:
+        - name: SPRING_DATASOURCE_PLATFORM
+          value: "mysql"
+        - name: MODE  				# 定义集群模式
+          value: "cluster"
+        - name: NACOS_VERSION
+          value: 2.3.2
+        - name: NACOS_REPLICAS		# 副本数为3
+          value: "3"
+        - name: SERVICE_NAME 		# Service名称
+          value: "nacos-svc"
+        - name: DOMAIN_NAME 		# 域名后缀
+          value: "cluster.local"
+        - name: NACOS_SERVER_PORT   
+          value: "8848"
+        - name: NACOS_APPLICATION_PORT
+          value: "8848"
+        - name: PREFER_HOST_MODE
+          value: "hostname"
+        - name: POD_NAMESPACE      
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+
+        volumeMounts:       # 将data卷的中peer-finder子目录挂载到主容器的/home/nacos/plugins/peer-finder
+        - name: data
+          mountPath: /home/nacos/plugins/peer-finder
+          subPath: peer-finder
+        - name: data
+          mountPath: /home/nacos/data
+          subPath: data
+        - name: data
+          mountPath: /home/nacos/logs
+          subPath: logs
+
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteMany" ]
+        storageClassName: "nfs-provisioner-storage"
+        resources:
+          requests:
+            storage: 20Gi
+

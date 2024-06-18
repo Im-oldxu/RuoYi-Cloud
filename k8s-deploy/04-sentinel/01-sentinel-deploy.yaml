@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sentinel-server
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sentinel
+  template:
+    metadata:
+      labels:
+        app: sentinel
+    spec:
+      containers:
+      - name: sentinel
+        image: uhub.service.ucloud.cn/oldxu/sentinel-dashboard:v1.8.8
+        ports:
+        - name: server
+          containerPort: 8718
+        - name: api
+          containerPort: 8719

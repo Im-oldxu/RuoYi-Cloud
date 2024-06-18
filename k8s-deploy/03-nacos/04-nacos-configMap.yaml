@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nacos-db-cm
+  namespace: dev
+data:
+  MYSQL_SERVICE_HOST: "mysql-nacos-0.mysql-nacos-svc.dev.svc.cluster.local"
+  MYSQL_SERVICE_DB_NAME: "ry-config"
+  MYSQL_SERVICE_PORT: "3306"
+  MYSQL_SERVICE_USER: "root"
+  MYSQL_SERVICE_PASSWORD: "oldxu"

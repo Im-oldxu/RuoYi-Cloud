@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-nacos
+  namespace: dev
+spec:
+  serviceName: "mysql-nacos-svc"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+      role: nacos
+  template:
+    metadata:
+      labels:
+        app: mysql
+        role: nacos
+    spec:
+      containers:
+      - name: db
+        image: uhub.service.ucloud.cn/oldxu/mysql:8.0
+        args:
+        - "--character-set-server=utf8"		# 指定字符集
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: oldxu
+        - name: MYSQL_DATABASE
+          value: ry-config
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql/
+
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteMany"]
+      storageClassName: "nfs-provisioner-storage"
+      resources:
+        requests:
+          storage: 50Gi
