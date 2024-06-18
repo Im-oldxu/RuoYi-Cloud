@@ -1,0 +1,5 @@
+
+# Skywaling-agent的镜像制作，对应tar包，需要自行下载
+
+FROM uhub.service.ucloud.cn/oldxu/alpine:latest
+ADD ./apache-skywalking-java-agent-9.2.0.tgz /
