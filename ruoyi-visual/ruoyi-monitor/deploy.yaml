@@ -59,7 +59,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ruoyi-monitor-svc
-  namespace: dev
+  namespace: {namespace}
 spec:
   selector:
     app: ruoyi-monitor
