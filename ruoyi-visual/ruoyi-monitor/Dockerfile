@@ -1,4 +1,4 @@
-FROM openjdk:8-jre
+FROM uhub.service.ucloud.cn/oldxu/openjdk:8-jre-alpine
 
 COPY ./target/*.jar /ruoyi-monitor.jar
 RUN mkdir -p /app/logs/
